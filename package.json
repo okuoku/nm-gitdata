@@ -1,0 +1,10 @@
+{
+  "name": "nm-gitdata",
+  "version": "0.0.0",
+  "main": "index.js",
+  "author": "okuoku <mjt@cltn.org>",
+  "license": "CC0-1.0",
+  "dependencies": {
+    "nodegit": "^0.22.2"
+  }
+}
