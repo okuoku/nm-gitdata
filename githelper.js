@@ -2,6 +2,8 @@ function getmainhistory(commit, count){
     var cur = commit;
     var ret = [];
 
+    ret.push([cur]);
+
     return new Promise(done => {
         function next(){
             if(count == 0){
