@@ -5,6 +5,9 @@
   "author": "okuoku <mjt@cltn.org>",
   "license": "CC0-1.0",
   "dependencies": {
+    "cors": "^2.8.4",
+    "express": "^4.16.3",
+    "express-openapi": "^2.0.7",
     "nodegit": "^0.22.2"
   }
 }
