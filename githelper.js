@@ -1,4 +1,84 @@
+const Git = require("nodegit");
+
+function calcmainhistorychain(commit, cb){
+    // cb := Promise(commit => boolean, false to terminate)
+
+    var cur = commit;
+    var ret = [];
+
+    return new Promise(done => {
+        function next(){
+            cur.getParents().then(arr => {
+                if(arr && arr[0]){
+                    cb(arr[0]).then(check => {
+                        if(check){
+                            ret.push(arr[0]);
+                            cur = arr[0];
+                            next();
+                        }else{
+                            done(ret);
+                        }
+                    });
+                }else{
+                    done(ret);
+                }
+            });
+        };
+
+        next();
+    });
+}
+
+function getcommitops(commit){
+    return new Promise((done,err) => {
+        /* FIXME: Use single tree-to-tree diff to optimize merge diffs */
+        commit.getDiff().then(arr => {
+            if(arr && arr[0]){
+                const theDiff = arr[0];
+
+                var all,n,i;
+                all = [];
+                n = theDiff.numDeltas();
+                for(i=0;i!=n;i++){ /* FIXME: ??? */
+                    all.push(theDiff.getDelta(i));
+                }
+                const ret = all.map(e => {
+                    var op;
+                    const from = e.oldFile().path();
+                    const to = e.newFile().path();
+                    switch(e.status()){
+                        case Git.Diff.DELTA.ADDED:
+                            op = "add";
+                            break;
+                        case Git.Diff.DELTA.DELETED:
+                            op = "del";
+                            break;
+                        case Git.Diff.DELTA.MODIFIED:
+                            op = "mod";
+                            break;
+                        case Git.Diff.DELTA.RENAMED:
+                            op = "move";
+                            break;
+                        case Git.Diff.DELTA.COPIED:
+                            op = "copy";
+                            break;
+                        default:
+                            op = e.status();
+                            break;
+                    }
+                    return {ident: commit.sha(), op: op, from: from, to: to};
+                });
+                done(ret);
+            }else{
+                err("???");
+            }
+        });
+
+    });
+}
+
 function getmainhistory(commit, count){
+    /* NB: revwalk is your friend */
     var cur = commit;
     var ret = [];
 
@@ -27,5 +107,7 @@ function getmainhistory(commit, count){
 };
 
 module.exports = {
+    calcmainhistorychain:calcmainhistorychain,
+    getcommitops:getcommitops,
     getmainhistory:getmainhistory
 };
