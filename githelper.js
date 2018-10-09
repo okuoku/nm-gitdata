@@ -30,6 +30,7 @@ function calcmainhistorychain(commit, cb){
 }
 
 function getcommitops(commit){
+    const ident = commit.sha();
     return new Promise((done,err) => {
         /* FIXME: Use single tree-to-tree diff to optimize merge diffs */
         commit.getDiff().then(arr => {
@@ -66,9 +67,8 @@ function getcommitops(commit){
                             op = e.status();
                             break;
                     }
-                    return {ident: commit.sha(), op: op, from: from, to: to};
                 });
-                done(ret);
+                done({ident: ident, ops: ret});
             }else{
                 err("???");
             }
