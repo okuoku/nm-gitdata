@@ -16,10 +16,12 @@ function calcmainhistorychain(commit, cb){
                             cur = arr[0];
                             next();
                         }else{
+                            console.log("DONE1");
                             done(ret);
                         }
                     });
                 }else{
+                    console.log("DONE2");
                     done(ret);
                 }
             });

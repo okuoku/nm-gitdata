@@ -24,7 +24,9 @@ function resetdb(name){
 
     return Promise.all([resetdb0(refsname),resetdb0(statename)]).then(x => {
         return client.connect().then(client => {
-            return client.db().collection(statename).ensureIndex({ident: 1}, {unique: true});
+            return client.db().collection(statename).ensureIndex({ident: 1}, {unique: true}).then(x => {
+                return client.db().collection(refsname).ensureIndex({ "author": "text", "message":"text"});
+            });
         });
     });
 }
@@ -53,10 +55,10 @@ function make_db_getter(name){
         client.connect().then(client => {
             const col = client.db().collection(refsname);
             function getter(ident){
-                console.log("Get", ident);
+                //console.log("Get", ident);
                 if(ident){
                     return new Promise((done, err) => {
-                        console.log("Find", ident);
+                        //console.log("Find", ident);
                         col.find({ident: ident}).toArray().then(arr => {
                             if(arr && arr.length == 1){
                                 done(arr[0]);
