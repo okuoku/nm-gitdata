@@ -41,12 +41,12 @@ function procbranch(repo, ref){ // => Promise
     }
     function check(commit){
         return new Promise(res => {
-            checkcount();
             G(commit.sha()).then(x => {
                 if(x){
                     console.log("TERM", commit.sha());
                     res(false);
                 }else{
+                    checkcount();
                     //console.log("CONT", commit.sha());
                     res(true);
                 }
@@ -77,8 +77,14 @@ function procbranch(repo, ref){ // => Promise
             return GitHelper.calcmainhistorychain(commit, check);
         }).then(chain => {
             console.log("Enterref:",ref.name());
-            return Promise.all(chain.map(enterref));
+            return chain.reduce((cur, e) => {
+                return cur.then(_ => {
+                    return enterref(e).then(_ => {
+                    });
+                });
+            }, Promise.resolve());
         }).then(_ => {
+            console.log("Done:",ref.name(),check_counter,set_counter);
             res(true);
         }).catch(e => {
             console.warn("catch",e);

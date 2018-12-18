@@ -24,8 +24,8 @@ function resetdb(name){
 
     return Promise.all([resetdb0(refsname),resetdb0(statename)]).then(x => {
         return client.connect().then(client => {
-            return client.db().collection(refsname).ensureIndex({ident: 1}, {unique: true}).then(x => {
-                return client.db().collection(refsname).ensureIndex({ "author": "text", "message":"text"});
+            return client.db().collection(refsname).createIndex({ident: 1}, {unique: true}).then(x => {
+                return client.db().collection(refsname).createIndex({ "author": "text", "message":"text"});
             });
         });
     });
@@ -39,7 +39,7 @@ function make_db_setter(name){
             const col = client.db().collection(refsname);
             function setter(obj){
                 if(obj){
-                    return col.insert(obj);
+                    return col.insertOne(obj);
                 }else{
                     return client.close();
                 }
