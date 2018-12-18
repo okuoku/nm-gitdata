@@ -62,7 +62,7 @@ function procbranch(repo, ref){ // => Promise
                          "author":commit.author().toString(),
                          "date":commit.date(),
                          "message":commit.message(),
-                         "parents":parents
+                         "parents":parents.map(c => c.sha())
                 });
             }).then(_ => {
                 res(true);
@@ -119,19 +119,3 @@ DB.make_db_getter("check").then(theGetter => {
     process.exit(0);
 });
 
-
-/*
-
-    return repo.getCommit("78c757af4b4ec93083ee06a262138b6c822b4906");
-}).then(commit => {
-    return GitHelper.calcmainhistorychain(commit, R => Promise.resolve(true));
-}).then(array => {
-    var x = array.map(e => GitHelper.getcommitops(e));
-    return Promise.all(x);
-}).then(a => {
-    return Promise.all(a.map(procref));
-}).then(a => {
-    console.log(a);
-    console.log("Done.");
-});
-*/
