@@ -93,6 +93,13 @@ function procbranch(repo, ref){ // => Promise
     });
 }
 
+function headsmap(ref){
+    return {
+        name: ref.name(),
+        ref: ref.target().tostrS()
+    };
+}
+
 DB.make_db_getter("check").then(theGetter => {
     G = theGetter;
     return Promise.resolve(true);
@@ -107,13 +114,15 @@ DB.make_db_getter("check").then(theGetter => {
     REPO = repo;
     return repo.getReferences(Git.Reference.TYPE.LISTALL);
 }).then(arr => {
-    return arr.reduce((cur, e) => {
-        return cur.then(_ => {
-            return procbranch(REPO, e).then(_ => {
-                console.log("PROC:",e.target().tostrS());
+    return DB.heads_set("check",arr.map(headsmap)).then(_ => {
+        return arr.reduce((cur, e) => {
+            return cur.then(_ => {
+                return procbranch(REPO, e).then(_ => {
+                    console.log("PROC:",e.target().tostrS());
+                });
             });
-        });
-    }, Promise.resolve([]));
+        }, Promise.resolve());
+    });
 }).then(_ => {
     console.log("Done.");
     process.exit(0);
