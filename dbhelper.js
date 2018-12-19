@@ -1,9 +1,7 @@
 const MongoClient = require("mongodb").MongoClient;
 
-const url = "mongodb://127.0.0.1:27999/reposoup";
-const client = new MongoClient(url,{useNewUrlParser:true});
-
-function resetdb0(name){
+function resetdb0(url, name){
+    const client = new MongoClient(url,{useNewUrlParser:true});
     return new Promise((done,err) => {
         client.connect().then(client => {
             client.db().dropCollection(name).then(C => {
@@ -18,12 +16,14 @@ function resetdb0(name){
     });
 }
 
-function resetdb(name){
+function resetdb(url, name){
     const refsname = name + "_refs";
     const headsname = name + "_heads";
     const statename = name + "_state";
+    const client = new MongoClient(url,{useNewUrlParser:true});
 
-    return Promise.all([resetdb0(refsname),resetdb0(statename),resetdb0(headsname)]).then(x => {
+    return Promise.all([resetdb0(url, refsname),
+        resetdb0(url, statename),resetdb0(url, headsname)]).then(x => {
         return client.connect().then(client => {
             return client.db().collection(refsname).createIndex({ident: 1}, {unique: true}).then(x => {
                 return client.db().collection(refsname).createIndex({ "author": "text", "message":"text"});
@@ -34,8 +34,9 @@ function resetdb(name){
     });
 }
 
-function make_db_setter(name){
+function make_db_setter(url, name){
     const refsname = name + "_refs";
+    const client = new MongoClient(url,{useNewUrlParser:true});
 
     return new Promise((done, err) => {
         client.connect().then(client => {
@@ -52,8 +53,9 @@ function make_db_setter(name){
     });
 }
 
-function make_db_getter(name){
+function make_db_getter(url, name){
     const refsname = name + "_refs";
+    const client = new MongoClient(url,{useNewUrlParser:true});
     return new Promise((done, err) => {
         client.connect().then(client => {
             const col = client.db().collection(refsname);
@@ -84,8 +86,9 @@ function make_db_getter(name){
     });
 }
 
-function heads_set(name, obj){
+function heads_set(url, name, obj){
     const headsname = name + "_heads";
+    const client = new MongoClient(url,{useNewUrlParser:true});
     return client.connect().then(client => {
         return client.db().collection(headsname)
             .findOneAndReplace({theHead:"theHead"},
@@ -93,8 +96,9 @@ function heads_set(name, obj){
     });
 }
 
-function heads_get(name){
+function heads_get(url, name){
     const headsname = name + "_heads";
+    const client = new MongoClient(url,{useNewUrlParser:true});
     return new Promise((done, err) => {
         client.connect().then(client => {
             return client.db().collection(headsname);

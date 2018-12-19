@@ -2,6 +2,12 @@ const Git = require("nodegit");
 const GitHelper = require("./githelper.js");
 const DB = require("./dbhelper.js");
 
+// Load configuration, secrets
+const config_asset_path = process.env.ASSET_PATH ? process.env.ASSET_PATH :
+    "c:/cygwin64/home/oku/repos/yunibase/impl-current/mit-scheme";
+const config_mongo_url = process.env.MONGO_URL ? process.env.MONGO_URL :
+    "mongodb://127.0.0.1:27999/reposoup";
+
 var G, S, REPO;
 
 function procref(ref){
@@ -100,21 +106,21 @@ function headsmap(ref){
     };
 }
 
-DB.make_db_getter("check").then(theGetter => {
+DB.make_db_getter(config_mongo_url, "check").then(theGetter => {
     G = theGetter;
     return Promise.resolve(true);
 }).then(_ => {
-    return DB.make_db_setter("check")
+    return DB.make_db_setter(config_mongo_url, "check")
 }).then(theSetter => {
     S = theSetter;
     return Promise.resolve(true);
 }).then(_ => {
-    return Git.Repository.open("c:/cygwin64/home/oku/repos/yunibase/impl-current/mit-scheme");
+    return Git.Repository.open(config_asset_path);
 }).then(repo => {
     REPO = repo;
     return repo.getReferences(Git.Reference.TYPE.LISTALL);
 }).then(arr => {
-    return DB.heads_set("check",arr.map(headsmap)).then(_ => {
+    return DB.heads_set(config_mongo_url, "check",arr.map(headsmap)).then(_ => {
         return arr.reduce((cur, e) => {
             return cur.then(_ => {
                 return procbranch(REPO, e).then(_ => {
