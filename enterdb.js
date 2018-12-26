@@ -8,7 +8,7 @@ const config_asset_path = process.env.ASSET_PATH ? process.env.ASSET_PATH :
 const config_mongo_url = process.env.MONGO_URL ? process.env.MONGO_URL :
     "mongodb://127.0.0.1:27999/reposoup";
 
-var G, S, REPO;
+var G, S, P, REPO;
 
 function procref(ref){
     if(ref.ident){
@@ -61,17 +61,37 @@ function procbranch(repo, ref){ // => Promise
     }
     function enterref(commit){
         return new Promise(res => {
-            commit.getParents().then(parents => {
-                setcount();
-                return S({
-                         "ident":commit.sha(),
-                         "author":commit.author().toString(),
-                         "date":commit.date(),
-                         "message":commit.message(),
-                         "parents":parents.map(c => c.sha())
-                });
+            const pagesize = 300;
+            let oppages_count = 0;
+            let oppages = [];
+            GitHelper.getcommitops(commit).then(ops => {
+                oppages_count = Math.ceil(ops.length / pagesize);
+                for(let page = 0; page != oppages_count; page++){
+                    let end = Math.min((page+1) * pagesize, ops.length);
+                    let content = [];
+                    for(let idx = page; idx != end; idx++){
+                        content.push(ops[idx]);
+                    }
+                    oppages.push({"ident":commit.sha(),
+                                 "page":page,
+                                 "ops":content});
+                }
+                if(ops.length == 0){
+                    return Promise.resolve([]);
+                }else{
+                    return Promise.all(oppages.map(e => P(e)));
+                }
             }).then(_ => {
-                res(true);
+                commit.getParents().then(parents => {
+                    setcount();
+                    return S({
+                             "ident":commit.sha(),
+                             "author":commit.author().toString(),
+                             "date":commit.date(),
+                             "message":commit.message(),
+                             "parents":parents.map(c => c.sha())
+                    });
+                }).then(_ => res(true));
             });
         });
     }
@@ -110,9 +130,12 @@ DB.make_db_getter(config_mongo_url, "check").then(theGetter => {
     G = theGetter;
     return Promise.resolve(true);
 }).then(_ => {
-    return DB.make_db_setter(config_mongo_url, "check")
+    return DB.make_db_setter(config_mongo_url, "check", "refs");
 }).then(theSetter => {
     S = theSetter;
+    return DB.make_db_setter(config_mongo_url, "check", "paths");
+}).then(theSetter => {
+    P = theSetter;
     return Promise.resolve(true);
 }).then(_ => {
     return Git.Repository.open(config_asset_path);

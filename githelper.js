@@ -49,6 +49,8 @@ function getcommitops(commit){
                     var op;
                     const from = e.oldFile().path();
                     const to = e.newFile().path();
+                    const from_oid = e.oldFile().id().tostrS();
+                    const to_oid = e.newFile().id().tostrS();
                     switch(e.status()){
                         case Git.Diff.DELTA.ADDED:
                             op = "add";
@@ -69,8 +71,15 @@ function getcommitops(commit){
                             op = e.status();
                             break;
                     }
+                    return {
+                        "op": op,
+                        "from": from,
+                        "from_oid": from_oid,
+                        "to": to,
+                        "to_oid": to_oid,
+                    };
                 });
-                done({ident: ident, ops: ret});
+                done(ret);
             }else{
                 err("???");
             }

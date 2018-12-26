@@ -20,27 +20,39 @@ function resetdb(url, name){
     const refsname = name + "_refs";
     const headsname = name + "_heads";
     const statename = name + "_state";
+    const pathsname = name + "_paths";
     const client = new MongoClient(url,{useNewUrlParser:true});
 
-    return Promise.all([resetdb0(url, refsname),
-        resetdb0(url, statename),resetdb0(url, headsname)]).then(x => {
+    return Promise.all([
+        resetdb0(url, refsname),
+        resetdb0(url, statename),
+        resetdb0(url, headsname),
+        resetdb0(url, pathsname),
+    ]).then(x => {
         return client.connect().then(client => {
-            return client.db().collection(refsname).createIndex({ident: 1}, {unique: true}).then(x => {
-                return client.db().collection(refsname).createIndex({ "author": "text", "message":"text"});
-            }).then(_ => {
-                return client.db().collection(headsname).insertOne({"theHead":"theHead","theHeads":[]});
-            });
+            const refscol = client.db().collection(refsname);
+            const headscol = client.db().collection(headsname);
+            const pathscol = client.db().collection(pathsname);
+
+            return refscol.createIndex({ident: 1}, {unique: true}).then(_ => refscol.createIndex({ "author": "text", "message":"text"})
+            ).then(_ => 
+                   headscol.insertOne({"theHead":"theHead","theHeads":[]})
+            ).then(_ =>
+                   pathscol.createIndex({"ident": 1, 
+                                        "ops": "text",
+                                        "page": 1})
+            );
         });
     });
 }
 
-function make_db_setter(url, name){
-    const refsname = name + "_refs";
+function make_db_setter(url, reposname, name){
+    const colname = reposname + "_" + name;
     const client = new MongoClient(url,{useNewUrlParser:true});
 
     return new Promise((done, err) => {
         client.connect().then(client => {
-            const col = client.db().collection(refsname);
+            const col = client.db().collection(colname);
             function setter(obj){
                 if(obj){
                     return col.insertOne(obj);
